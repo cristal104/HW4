@@ -1,0 +1,493 @@
+<!--
+Name: Cristal Meza
+Class: CPSC 332, Fall 2022
+Assignment: Homework 4 - Javasript
+Last modified date: 10/23/22
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Quiz App</title>
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            font-family: "Trebuchet MS", Helvetica, sans-serif;
+        }
+
+        :root {
+            --hue-neutral: 200;
+            --hue-wrong: 0; /* red*/
+            --hue-correct: 145;
+        }
+
+        body {
+            --hue: var(--hue-neutral);  
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: 100vw;
+            height: 100vh;
+            justify-content: center;
+            align-items: center;
+            background-image: url("floral-pattern.jpg");
+        }
+
+        body.correct {
+            --hue: var(--hue-correct);
+        }
+
+        body.wrong {
+            --hue: var(--hue-wrong);
+        }
+
+        .container {
+            width: 800px;
+            max-width: 80%;
+            background-color: white;
+            border-radius: 5px;
+            padding: 10px;
+            box-shadow: 0 0 10px 2px;
+        }
+
+        .btn-grid {
+            display: grid;
+            grid-template-columns: repeat(2, auto);
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .btn {
+            --hue: var(--hue-neutral);
+            border: 1px solid hsl(var(--hue), 100%, 30%);
+            background-color:violet;
+            border-color: darkviolet;
+            border-radius: 5px;
+            padding: 5px 10px;
+            color: white;
+            outline: none;
+        }
+
+        .btn:hover {
+            border-color: black;
+        }
+
+        .btn.correct {
+            --hue: var(--hue-correct);
+            color: black;
+        }
+
+        .btn.wrong {
+            --hue: var(--hue-wrong);
+        }
+
+        .start-btn,
+        .next-btn,
+        .back-btn,
+        .restart-btn {
+            font-size: 1.5rem;
+            font-weight: bold;
+            padding: 10px 20px;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .hide {
+            display: none;
+        }
+
+        #check-box{
+            margin-bottom: 10px;
+            border-color:deeppink;
+            border-style: dotted;
+        }
+        #timer {
+            background-color: white;
+            color: black;
+            margin-bottom: 10px;
+        }
+        #info-container{
+            background-color: mistyrose;
+        }
+    </style>
+    <script>
+
+        // Add an event listener for the DOMContentLoaded event
+        window.addEventListener("DOMContentLoaded", domLoaded);
+
+        function domLoaded() {
+            const startButton = document.getElementById('start-btn')
+            const restartButton = document.getElementById('restart-btn')
+            const nextButton = document.getElementById('next-btn')
+            const backButton = document.getElementById('back-btn')
+            const questionContainerElement = document.getElementById('question-container')
+            const questionElement = document.getElementById('question')
+            const answerButtonsElement = document.getElementById('answer-buttons')
+            const mainContainer = document.getElementById('main-container')
+            const checkboxElemenet = document.getElementById("check-box")
+            const shuffleCheckbox = document.querySelector("input[name=shuffle-cards]");
+            const correctCheckbox = document.querySelector("input[name=remove-correct]");
+            const timerCheckbox = document.querySelector("input[name=timed-session]");
+            const timer = document.getElementById("timer")
+            const correctArray = []
+            var Interval
+            var seconds = 00
+            var minutes = 00
+            var appendMinutes = document.getElementById("minutes")
+            var appendSeconds = document.getElementById("seconds")
+
+            let shuffledQuestions, currentQuestionIndex
+
+            shuffleCheckbox.addEventListener("change", (e) => {
+                if (e.target.checked) {
+                    shuffledQuestions = questions.slice().sort(() => Math.random() - .5) 
+                }
+            });
+            correctCheckbox.addEventListener("change", (e) => {
+
+            });
+            timerCheckbox.addEventListener("change", (e) => {
+                var Interval
+                var seconds = 00
+                var minutes = 00
+                var appendMinutes = document.getElementById("minutes")
+                var appendSeconds = document.getElementById("seconds")
+            });
+
+            startButton.addEventListener('click', startGame)
+            restartButton.addEventListener('click', restartGame)
+            nextButton.addEventListener('click', () => {
+                currentQuestionIndex++
+                if(timerCheckbox.checked == true){
+                    resetTimer()
+                }
+                setNextQuestion()
+            })
+
+            backButton.addEventListener('click', () => {
+                if(currentQuestionIndex > 0){
+                currentQuestionIndex--
+                if(timerCheckbox.checked == true){
+                    resetTimer()
+                }
+                setNextQuestion()
+                }
+            })
+
+            function startGame() {
+                //timer
+                if(timerCheckbox.checked == true){
+                    resetTimer()
+                    timer.classList.remove('hide')
+                }
+                startButton.classList.add('hide')           
+                checkboxElemenet.classList.add('hide')
+                if(shuffleCheckbox.checked == false){
+                    shuffledQuestions = questions
+                }
+                shuffledInfo = info
+                currentQuestionIndex = 0
+                questionContainerElement.classList.remove('hide')
+                setNextQuestion()
+            }
+            function startTimer () {
+                seconds++; 
+                if(seconds <= 60){
+                    appendSeconds.innerHTML = seconds;
+                } 
+                if (seconds == 60) {
+                    minutes++;
+                    appendMinutes.innerHTML = "0" + minutes;
+                    seconds = 0;
+                    appendSeconds.innerHTML = "0" + 0;
+                }   
+                if(seconds % 30 == 0 % seconds != 0){
+                    document.getElementById("timer").style.backgroundColor = "red"
+                }
+                else if(seconds % 32 == 0 % seconds != 0){
+                    document.getElementById("timer").style.backgroundColor = "red"
+                }
+                else{
+                    document.getElementById("timer").style.backgroundColor = "white" 
+                }
+            }
+
+            function restartGame() {
+                if(timerCheckbox.checked == true){
+                    resetTimer()
+                    timer.classList.remove('hide')
+                }
+
+                restartButton.classList.add('hide')
+                shuffledQuestions = questions
+                shuffledInfo = info
+                currentQuestionIndex = 0
+                questionContainerElement.classList.remove('hide')
+                setNextQuestion()
+            }
+            function resetTimer(){
+                clearInterval(Interval);
+                Interval = setInterval(startTimer, 1000);
+                minutes = "00";
+  	            seconds = "00";
+                appendMinutes.innerHTML = minutes;
+  	            appendSeconds.innerHTML = seconds;
+            }
+
+            function setNextQuestion() {
+                resetState()
+                if (document.contains(document.getElementById("info-container"))) {
+                    document.getElementById("info-container").remove();
+                } 
+                showQuestion(shuffledQuestions[currentQuestionIndex])
+            }
+
+            function showQuestion(question) {
+                questionElement.innerText = question.question
+                question.answers.forEach(answer => {
+                    const button = document.createElement('button')
+                    button.innerText = answer.text
+                    button.classList.add('btn')
+                    if (answer.correct) {
+                        button.dataset.correct = answer.correct
+                    }
+                    button.addEventListener('click', selectAnswer)
+                    answerButtonsElement.appendChild(button)
+                })
+            }
+
+            function resetState() {
+                clearStatusClass(document.body)
+                nextButton.classList.add('hide')
+                backButton.classList.add('hide')
+                while (answerButtonsElement.firstChild) {
+                    answerButtonsElement.removeChild(answerButtonsElement.firstChild)
+                }
+            }
+
+            function selectAnswer(e) {
+                // add the flashcard  
+                const selectedButton = e.target
+                const correct = selectedButton.dataset.correct
+                setStatusClass(document.body, correct)
+                Array.from(answerButtonsElement.children).forEach(button => {
+                    setStatusClass(button, button.dataset.correct)
+                })
+                if (shuffledQuestions.length > currentQuestionIndex + 1) {
+                    nextButton.classList.remove('hide')
+                    if(currentQuestionIndex > 0){
+                        backButton.classList.remove('hide')
+                    }
+                } else {
+                    restartButton.innerText = 'Restart'
+                    restartButton.classList.remove('hide')
+                }
+                createInfoContainer()
+                clearInterval(Interval)
+            }
+            function createInfoContainer(){
+                // create container here
+                let response = document.createElement("div")
+                response.classList.add('container')
+                response.setAttribute("id", 'info-container');
+                document.body.appendChild(response)
+                document.body.insertBefore(response, mainContainer)
+
+                //create p element that stores info
+                let cardP = document.createElement("p")
+                let cardText = document.createTextNode(shuffledInfo[(shuffledQuestions[currentQuestionIndex].number) - 1].text)
+                cardP.appendChild(cardText)
+                response.appendChild(cardP)
+            }
+
+            function setStatusClass(element, correct) {
+                clearStatusClass(element)
+                if (correct) {
+                    element.classList.add('correct')
+                } else {
+                    element.classList.add('wrong')
+                }
+            }
+
+            function clearStatusClass(element) {
+                element.classList.remove('correct')
+                element.classList.remove('wrong')
+            }
+
+            const questions = [
+                {
+                    question: 'Orchids get their nutrients from...',
+                    answers: [
+                        { text: 'Soil', correct: false },
+                        { text: 'Air', correct: true },
+                    ],
+                    number: 1
+                },
+                {
+                    question: 'What is the smallest flower in the world?',
+                    answers: [
+                        { text: 'Wolffia Globosa', correct: true },
+                        { text: 'Hyacinth', correct: false },
+                        { text: 'Chrysanthemum', correct: false },
+                        { text: 'Alstroemeria', correct: false },
+                        { text: 'Dandelion', correct: false },
+                    ],
+                    number: 2
+                },
+                {
+                    question: 'Tulips are a national flower to which of the following countries?',
+                    answers: [
+                        { text: 'Canada', correct: false },
+                        { text: 'Holland', correct: true },
+                        { text: 'Sweden', correct: false },
+                        { text: 'Australia', correct: false },
+                        { text: 'Hungary', correct: false },
+                    ],
+                    number: 3
+                },
+                {
+                    question: 'What is the study of plants called?',
+                    answers: [
+                        { text: 'Botany', correct: false },
+                        { text: 'Hydrology', correct: true },
+                        { text: 'Oneirology', correct: false }
+                    ],
+                    number: 4
+                },
+                {
+                    question: 'What yellow flower symbolizes frienship?',
+                    answers: [
+                        { text: 'Marigold', correct: false },
+                        { text: 'Carnation', correct: false},
+                        { text: 'Daffodil', correct: true }
+                    ],
+                    number: 5
+                },
+                {
+                    question: 'What is the official flower of the United States?',
+                    answers: [
+                        { text: 'Peony', correct: false },
+                        { text: 'Tulip', correct: false},
+                        { text: 'Orchid', correct: false },
+                        { text: 'Daisy', correct: false },
+                        { text: 'Rose', correct: true},
+                        { text: 'Sunflower', correct: true }
+                    ],
+                    number: 6
+                },
+                {
+                    question: 'The Flame Lily is poisonous to humans if ingested...',
+                    answers: [
+                        { text: 'True', correct: true },
+                        { text: 'False', correct: false},
+                    ],
+                    number: 7
+                },
+                {
+                    question: 'Is a Calla Lily a true lily?',
+                    answers: [
+                        { text: 'Yes', correct: false},
+                        { text: 'No', correct: true},
+                    ],
+                    number: 8
+                },
+                {
+                    question: 'Moon flowers only bloom during night and closee during the day...',
+                    answers: [
+                        { text: 'True', correct: true },
+                        { text: 'False', correct: false},
+                    ],
+                    number: 9
+                },
+                {
+                    question: 'Which of the following flowers is considered to be one of the easiest flowers for beginners to grow?',
+                    answers: [
+                        { text: 'Orchid', correct: false },
+                        { text: 'Caladiums', correct: false },
+                        { text: 'Sunflower', correct: true},
+                        { text: 'Boston Fern', correct: false },
+                        { text: 'Begonia Macalata', correct: false },
+                    ],
+                    number: 10
+                },
+            ]
+
+            const info = [
+                {
+                    text: "Orchids often show their roots above the soil in which they are planted, and these roots are called aerial roots."
+                },
+                {
+                    text: "This small flower is a good protein source for animals and humans."
+                },
+                {
+                    text: "Tulips are native to Kazakhstan and were imported to Holland in the 16th century."
+                },
+                {
+                    text: "Botany is the study of plants which includes flowers, trees, and cacti."
+                },
+                {
+                    text: "The yellow Daffodil also symbolizes new beginnings."
+                },
+                {
+                    text: "The rose became the national flower of the United States on October 7, 1986."
+                },
+                {
+                    text: "Flame Lilies contain colchicine, a poison that can be fatal if ingested by humans."
+                },
+                {
+                    text: "Carolus Linnaeus, a Swedish botanist, made an error when naming the Calla Lily as the flower is not of the Lilium family."
+                },
+                {
+                    text: "These flowers can also bloom on a cloudy day and also have a cousin, the Morning Glories, that only boom duing the day."
+                },
+                {
+                    text: "Sunflowers are considered low maintenance as they are inexpensive and survive in low moisture."
+                },
+            ]
+        }
+    </script>
+</head>
+
+<body>
+    <div id="main-container" class="container">
+        <fieldset id="check-box">
+            <legend> Options</legend>
+            <input type="checkbox" id="shuffle-cards" name="shuffle-cards" value="Shuffle">
+                <label for="shuffle-cards"> Shuffle Cards</label><br>
+            <input type="checkbox" id="timed-session" name="timed-session" value="Timed">
+                <label for="timed-session"> Timed Session</label><br>
+            <input type="checkbox" id="remove-correct" name="remove-correct" value="Remove">
+                <label for="remove-correct"> Remove Correct from Deck</label><br>
+        </fieldset>
+        <div id="question-container" class="hide">
+            <div id="question">Question</div>
+            <div id="answer-buttons" class="btn-grid">
+                <button class="btn">Answer 1</button>
+                <button class="btn">Answer 2</button>
+                <button class="btn">Answer 3</button>
+                <button class="btn">Answer 4</button>
+            </div>
+        </div>
+        <div class="controls">
+            <button id="start-btn" class="start-btn btn">Start</button>
+            <button id="restart-btn" class="restart-btn btn hide">Restart</button>
+            <button id="back-btn" class="back-btn btn hide">Back</button>
+            <button id="next-btn" class="next-btn btn hide">Next</button>
+            <mark id= "timer" class="hide"><span id="minutes">00</span>m<span id="seconds">00</span>s</mark>
+        </div>
+        </div>
+</body>
+</html>
